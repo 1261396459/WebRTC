@@ -2,14 +2,10 @@
 <html>
 <head>
     <title>Camera</title>
-    <style>
-        #user-list>li {
-            font-size: 24px;
-        }
-    </style>
         <script src="//cdn.bootcdn.net/ajax/libs/socket.io/3.0.4/socket.io.js"></script>
         <script src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.js"></script>
         <script src="test.js"></script>
+        <link rel="stylesheet" href="css/test.css" />
 </head>
 
 <body >  
@@ -20,13 +16,19 @@
     </div>
     
     <div>
-        <video id="video-local" controls autoplay></video><br>
+        <div id="videos">
+            <video id="video-local" class="ve" controls autoplay></video>
+        </div>
         <label for="video-h">高</label><input type="number" id="video-h" >
         <label for="video-w">宽</label><input type="number" id="video-w" >
-        <button id="video-set">设置宽高</button>
-        <div id="videos"></div>
+        <button id="video-set">设置宽高</button> 
     </div>
-    
+    <div>
+        <ul id="messages"></ul>
+        <form action="">
+            <input id="m" autocomplete="off" /><button>Send</button>
+        </form>
+    </div>
     <div>
         <canvas id="capture-canvas" style="display: none;"></canvas>
         <button id="capture">拍照</button>

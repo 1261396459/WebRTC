@@ -1,0 +1,26 @@
+#user-list>li {
+    font-size: 24px;
+    color: white;
+}
+
+#user-id {
+    color: red;
+}
+
+input {
+    border-radius: 15px;
+    background: #ccc;
+    text-indent: 10px;
+}
+
+button {
+    width: 100px;
+    height: 30px;
+    background: #ccc;
+    border: 1px solid #eee;
+    border-radius: 15px;
+}
+
+body {
+    background-image: url(../miku.jpg);
+}

@@ -2,19 +2,13 @@ var express = require("express");
 var app = express();
 const fs = require('fs');
 let sslOptions = {
-        key: fs.readFileSync('C:/privkey.key'),//里面的文件替换成你生成的私钥
-        cert: fs.readFileSync('C:/cacert.pem')//里面的文件替换成你生成的证书
+        key: fs.readFileSync('C:/privkey.key'),//私钥
+        cert: fs.readFileSync('C:/cacert.pem')//证书
 };
 var https = require('https').createServer(sslOptions, app);  
 var io = require('socket.io')(https);
-
-var nameList=[];
  
 //收到get请求则发送html文档
-app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/client.html');
-});
-
 app.get('/test', (req, res) => {
     res.sendFile(__dirname + '/test.html');
 })
@@ -26,62 +20,54 @@ app.use(express.static('public'));
 var server = https.listen(3000, () => {
   var host = server.address().address == "::" ? "127.0.0.1" : server.address().port;
   var port = server.address().port;
-  var path = "";
+  var path = "/test";
   console.log("访问地址为 https://%s:%s%s", host, port, path);
 });
 
-io.on("connection", (socket) => {
-    //连接加入子房间
-        socket.join( socket.id );
-        function sendAll(req,data){
-            socket.broadcast.emit(req,data);
-        }
-        function recv(req,res){
-            socket.on(req,res);
-        }
-        console.log("a user connected " + socket.id);
+io.on('connection', (socket) => {//连接加入子房间
+    socket.join( socket.id );
+    console.log("a user connected " + socket.id);
 
-        recv("disconnect", () => {
-            console.log("user disconnected: " + socket.id);
-        //某个用户断开连接的时候，我们需要告诉所有还在线的用户这个信息
-        sendAll('user disconnected', socket.id);
+    function sendAll(req,data){//向客户端广播
+        socket.broadcast.emit(req,data);
+    }
+    function recv(req,res){//接收客户端消息
+        socket.on(req,res);
+    }
+
+    recv("disconnect", () => {//某个用户断开连接的时告诉所有还在线的用户
+        console.log(socket.id+" disconnected");
+        sendAll(socket.id+'user disconnected');
     });
     
-    recv("chat message",(msg) => {
+    recv("chat message",(msg) => {//转发聊天消息
         console.log(socket.id + " say: " + msg);
-        sendAll("chat message", msg);
+        sendAll("chat message",socket.id + " say: "+msg);
+        socket.emit("chat message",socket.id + " say: "+msg);
     });
     
-    //当有新用户加入，打招呼时，需要转发消息到所有在线用户。
-    recv('new user greet', (data) => {
-        console.log(data);
+    recv('new user greet', (data) => {//当有新用户加入告知所有在线用户。
         console.log(socket.id + ' greet ' + data.msg);
         sendAll('need connect', {sender: socket.id, msg : data.msg});
     });
-    //在线用户回应新用户消息的转发
-    recv('ok we connect', (data) => {
+    
+    recv('ok we connect', (data) => {//在线用户回应新用户消息的转发
         io.to(data.receiver).emit('ok we connect', {sender : data.sender});
     });
     
-    //sdp 消息的转发
-    recv( 'sdp', ( data ) => {
-          console.log('sdp');
-          console.log(data.description);
-          //console.log('sdp: ' + data.sender + ' to:' + data.to);
+    recv( 'sdp', ( data ) => {//sdp 消息的转发
+          console.log('sdp: ' + data.sender + ' to:' + data.to);
           socket.to( data.to ).emit( 'sdp', {
               description: data.description,
               sender: data.sender
          } );
     } );
     
-    //candidates 消息的转发
-    recv( 'ice candidates', ( data ) => {
-        console.log('ice candidates: ');
-        console.log(data);
+    recv( 'ice candidates', ( data ) => {//candidates 消息的转发
+        console.log('ice candidates: ' + data.sender + ' to:' + data.to);
         socket.to( data.to ).emit( 'ice candidates', {
             candidate: data.candidate,
             sender: data.sender
          } );
     } );
 });
-    
